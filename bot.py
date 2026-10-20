@@ -1,6 +1,8 @@
+import asyncio
 import logging
 import os
-from aiogram import Bot, Dispatcher, executor, types
+from aiogram import Bot, Dispatcher, types
+from aiogram.filters import CommandStart, Command
 from flask import Flask
 from threading import Thread
 
@@ -8,7 +10,7 @@ API_TOKEN = '8601041203:AAEmbpW2PvY-1iom5pQENfHeF2yf9-bRz00'
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher()
 
 QUIZ_DATA = [
     {
@@ -31,7 +33,8 @@ QUIZ_DATA = [
     }
 ]
 
-@dp.message_handler(commands=['start', 'test'])
+@dp.message(CommandStart())
+@dp.message(Command("test"))
 async def send_quiz(message: types.Message):
     quiz = QUIZ_DATA[0]
     await bot.send_poll(
@@ -54,7 +57,11 @@ def run_flask():
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
 
-if __name__ == '__main__':
+async def main():
     t = Thread(target=run_flask)
     t.start()
-    executor.start_polling(dp, skip_updates=True)
+    await dp.start_polling(bot)
+
+if __name__ == '__main__':
+    asyncio.run(main())
+                              
